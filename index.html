@@ -947,8 +947,8 @@ function assignCategory(catIndex) {
   document.getElementById('rr-cat').textContent  = `${cat.icon} ${cat.label}`;
   document.getElementById('rr-main').textContent = country;
 
-  const isCapped = isNA || (rank !== null && rank > SCORE_CAP);
-  if (isCapped) {
+  const showCapped = isNA || (rank !== null && rank > SCORE_CAP);
+  if (showCapped) {
     document.getElementById('rr-num').textContent   = '+100';
     document.getElementById('rr-num').style.color   = 'var(--red)';
     document.getElementById('rr-sub').textContent   = isNA

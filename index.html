@@ -205,9 +205,27 @@
       transition: opacity .3s;
     }
     .country-card.fading { opacity: 0; }
-    .country-flag { font-size: 72px; margin-bottom: 12px; display: block; }
-    .country-name { font-size: 36px; font-weight: 800; margin-bottom: 6px; }
+    .country-flag { font-size: 72px; margin-bottom: 12px; display: block; transition: filter .12s; }
+    .country-name { font-size: 36px; font-weight: 800; margin-bottom: 6px; transition: color .12s; }
     .country-prompt { font-size: 15px; color: var(--muted); }
+
+    /* Slot-machine roll state */
+    .country-flag.rolling,
+    .country-name.rolling {
+      opacity: .55;
+      filter: blur(.6px);
+    }
+    /* Flash when final country lands */
+    @keyframes country-land {
+      0%   { color: var(--accent); transform: scale(1.06); text-shadow: 0 0 24px rgba(240,192,64,.7); }
+      100% { color: var(--text);   transform: scale(1);    text-shadow: none; }
+    }
+    .country-name.revealed { animation: country-land .55s ease forwards; }
+    @keyframes flag-land {
+      0%   { transform: scale(1.12); filter: drop-shadow(0 0 12px rgba(240,192,64,.8)); }
+      100% { transform: scale(1);    filter: none; }
+    }
+    .country-flag.revealed { animation: flag-land .55s ease forwards; }
 
     /* Result overlay inside country card */
     .rank-result {
@@ -665,6 +683,8 @@ function getCategoryIndex(game, catId) {
   return DB.categories.findIndex(c => c.id === catId);
 }
 
+const SCORE_CAP = 100; // ranks above this, and N/A, all score exactly 100
+
 function getRank(countryName, catDbIndex) {
   const data = DB.countries[countryName];
   if (!data) return null;
@@ -673,8 +693,14 @@ function getRank(countryName, catDbIndex) {
 
 function getScore(countryName, catDbIndex) {
   const rank = getRank(countryName, catDbIndex);
-  if (rank === null) return DB.categories[catDbIndex].total + 1;
+  if (rank === null || rank > SCORE_CAP) return SCORE_CAP;
   return rank;
+}
+
+// Display string for a rank value
+function fmtRank(rank) {
+  if (rank === null || rank > SCORE_CAP) return '+100';
+  return `#${rank}`;
 }
 
 function rankQuality(rank, total) {
@@ -797,23 +823,67 @@ function buildCategoryButtons() {
 }
 
 /* ── Render current round ──────────────────────────────────── */
+/* ── Slot-machine animation ────────────────────────────────── */
+function animateCountryReveal(finalName, onDone) {
+  const nameEl    = document.getElementById('country-name');
+  const flagEl    = document.getElementById('country-flag');
+  const allNames  = Object.keys(DB.countries);
+  const FRAMES    = 26;
+  let   frame     = 0;
+
+  nameEl.classList.add('rolling');
+  flagEl.classList.add('rolling');
+  nameEl.classList.remove('revealed');
+  flagEl.classList.remove('revealed');
+
+  // Disable all category buttons during animation
+  state.categories.forEach((_, i) => {
+    document.getElementById(`cat-btn-${i}`).classList.add('disabled');
+  });
+
+  function tick() {
+    if (frame < FRAMES) {
+      const rand = allNames[Math.floor(Math.random() * allNames.length)];
+      nameEl.textContent = rand;
+      flagEl.textContent = getFlag(rand);
+      frame++;
+      // Ease-out: starts at ~30 ms, ends at ~200 ms
+      const t = frame / FRAMES;
+      const delay = 30 + t * t * 220;
+      setTimeout(tick, delay);
+    } else {
+      // Land on the real country
+      nameEl.textContent = finalName;
+      flagEl.textContent = getFlag(finalName);
+      nameEl.classList.remove('rolling');
+      flagEl.classList.remove('rolling');
+      nameEl.classList.add('revealed');
+      flagEl.classList.add('revealed');
+      // Re-enable non-used category buttons
+      state.categories.forEach((_, i) => {
+        if (!state.usedCats.has(i))
+          document.getElementById(`cat-btn-${i}`).classList.remove('disabled');
+      });
+      if (onDone) onDone();
+    }
+  }
+  tick();
+}
+
 function renderRound() {
   const round = state.round;
   const name  = state.countries[round];
 
-  document.getElementById('country-flag').textContent = getFlag(name);
-  document.getElementById('country-name').textContent = name;
   document.getElementById('country-prompt').textContent = 'Assign this country to a category below';
   document.getElementById('round-label').textContent = `Round ${round + 1} of 8`;
-  document.getElementById('round-hint').textContent = 'Pick a category for this country';
+  document.getElementById('round-hint').textContent = 'Selecting country…';
   document.getElementById('progress-fill').style.width = `${(round / 8) * 100}%`;
   document.getElementById('score-display').textContent = state.totalScore;
 
   // Hide result overlay
-  const rr = document.getElementById('rank-result');
-  rr.classList.remove('visible');
+  document.getElementById('rank-result').classList.remove('visible');
 
-  // Update category buttons
+  // Reset category buttons to correct state
   state.categories.forEach((cat, i) => {
     const btn = document.getElementById(`cat-btn-${i}`);
     btn.classList.remove('used','disabled','just-assigned');
@@ -827,9 +897,13 @@ function renderRound() {
     }
   });
 
-  // Fade in country card
+  // Fade in country card, then run slot animation
   const card = document.getElementById('country-card');
   card.classList.remove('fading');
+
+  animateCountryReveal(name, () => {
+    document.getElementById('round-hint').textContent = 'Pick a category for this country';
+  });
 }
 
 /* ── Assign category ───────────────────────────────────────── */
@@ -855,15 +929,10 @@ function assignCategory(catIndex) {
   btn.style.background  = cat.color + '18';
   document.getElementById(`cat-assigned-${catIndex}`).textContent = country;
   const rb = document.getElementById(`cat-rank-${catIndex}`);
-  if (isNA) {
-    rb.textContent = 'N/A';
-    rb.style.background = 'rgba(120,120,140,.2)';
-    rb.style.color = 'var(--muted)';
-  } else {
-    rb.textContent = `#${rank}`;
-    rb.style.background = cat.color + '22';
-    rb.style.color = cat.color;
-  }
+  const isCapped = isNA || rank > SCORE_CAP;
+  rb.textContent = isCapped ? '+100' : `#${rank}`;
+  rb.style.background = isCapped ? 'rgba(239,68,68,.15)' : cat.color + '22';
+  rb.style.color      = isCapped ? 'var(--red)' : cat.color;
 
   // Disable other buttons during reveal
   state.categories.forEach((_, i) => {
@@ -878,11 +947,14 @@ function assignCategory(catIndex) {
   document.getElementById('rr-cat').textContent  = `${cat.icon} ${cat.label}`;
   document.getElementById('rr-main').textContent = country;
 
-  if (isNA) {
-    document.getElementById('rr-num').textContent   = 'N/A';
-    document.getElementById('rr-num').style.color   = 'var(--muted)';
-    document.getElementById('rr-sub').textContent   = 'No data — counted as last place';
-    document.getElementById('rr-stars').textContent = '❌';
+  const isCapped = isNA || (rank !== null && rank > SCORE_CAP);
+  if (isCapped) {
+    document.getElementById('rr-num').textContent   = '+100';
+    document.getElementById('rr-num').style.color   = 'var(--red)';
+    document.getElementById('rr-sub').textContent   = isNA
+      ? 'No data available — capped at 100 pts'
+      : `Rank #${rank} out of ${catObj.total} — above cap of 100`;
+    document.getElementById('rr-stars').textContent = '💀';
   } else {
     document.getElementById('rr-num').textContent = `#${rank}`;
     document.getElementById('rr-num').style.color = qual.cls === 'rank-s' ? '#22c55e'
@@ -940,12 +1012,12 @@ function showResults() {
   const tbody = document.getElementById('results-tbody');
   tbody.innerHTML = '';
   state.assignments.forEach(({ country, catIndex, rank, score }) => {
-    const cat   = state.categories[catIndex];
-    const catDb = DB.categories[cat.dbIndex];
-    const isNA  = rank === null;
-    const qual  = isNA ? null : rankQuality(rank, catDb.total);
-    const cls   = isNA ? 'rank-na' : qual.cls;
-    const label = isNA ? 'N/A' : `#${rank}`;
+    const cat    = state.categories[catIndex];
+    const catDb  = DB.categories[cat.dbIndex];
+    const capped = rank === null || rank > SCORE_CAP;
+    const qual   = (!capped) ? rankQuality(rank, catDb.total) : null;
+    const cls    = capped ? 'rank-na' : qual.cls;
+    const label  = capped ? '+100' : `#${rank}`;
 
     tbody.innerHTML += `
       <tr>
@@ -1007,31 +1079,44 @@ function showBestModal() {
   document.getElementById('modal-your-score').textContent = yourScore;
   document.getElementById('modal-best-score').textContent = bestScore;
 
-  // Build a lookup: what did the player assign to each category?
-  const playerByCat = {};
-  state.assignments.forEach(({ country, catIndex, rank, score }) => {
-    playerByCat[catIndex] = { country, rank, score };
-  });
+  // Build inverted perm: invPerm[catIdx] = countryIdx in optimal assignment
+  const invPerm = new Array(8);
+  perm.forEach((catIdx, countryIdx) => { invPerm[catIdx] = countryIdx; });
 
   const tbody = document.getElementById('modal-tbody');
   tbody.innerHTML = '';
-  perm.forEach((catIdx, countryIdx) => {
-    const cat       = state.categories[catIdx];
-    const catDb     = DB.categories[cat.dbIndex];
-    const bestCtry  = state.countries[countryIdx];
-    const bestRank  = getRank(bestCtry, cat.dbIndex);
-    const bestScore2 = getScore(bestCtry, cat.dbIndex);
-    const player    = playerByCat[catIdx] || {};
-    const diff      = (player.score || 0) - bestScore2;
-    const diffStr   = diff === 0 ? '=' : diff > 0 ? `+${diff}` : `${diff}`;
-    const diffCls   = diff === 0 ? 'diff-same' : diff > 0 ? 'diff-better' : 'diff-worse';
+
+  // Iterate in the ORDER the player selected categories (state.assignments order)
+  state.assignments.forEach((assignment) => {
+    const catIdx     = assignment.catIndex;
+    const cat        = state.categories[catIdx];
+
+    // Best country for this category (optimal solution)
+    const bestCtryIdx = invPerm[catIdx];
+    const bestCtry    = state.countries[bestCtryIdx];
+    const bestRank    = getRank(bestCtry, cat.dbIndex);
+    const bestScoreV  = getScore(bestCtry, cat.dbIndex);
+
+    // Player's pick for this category
+    const playerCtry  = assignment.country;
+    const playerScore = assignment.score;
+
+    const diff    = playerScore - bestScoreV;
+    const diffStr = diff === 0 ? '=' : diff > 0 ? `+${diff}` : `${diff}`;
+    const diffCls = diff === 0 ? 'diff-same' : diff > 0 ? 'diff-better' : 'diff-worse';
 
     tbody.innerHTML += `
       <tr>
         <td>${cat.icon} ${cat.label}</td>
-        <td><span style="font-size:18px">${getFlag(bestCtry)}</span> ${bestCtry} <span style="color:var(--muted);font-size:12px">(#${bestRank ?? 'N/A'})</span></td>
-        <td style="font-weight:700">${bestScore2}</td>
-        <td><span style="font-size:14px">${getFlag(player.country||'')} ${player.country||'—'}</span></td>
+        <td>
+          <span style="font-size:18px">${getFlag(bestCtry)}</span> ${bestCtry}
+          <span style="color:var(--muted);font-size:12px">(${fmtRank(bestRank)})</span>
+        </td>
+        <td style="font-weight:700">${bestScoreV}</td>
+        <td>
+          <span style="font-size:15px">${getFlag(playerCtry)}</span> ${playerCtry}
+          <span style="color:var(--muted);font-size:12px">(${fmtRank(assignment.rank)})</span>
+        </td>
         <td class="${diffCls}">${diffStr}</td>
       </tr>`;
   });

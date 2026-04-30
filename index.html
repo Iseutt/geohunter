@@ -732,6 +732,58 @@ function eligibleCountries(gameCats) {
     .map(([name]) => name);
 }
 
+/* ── Audio ─────────────────────────────────────────────────── */
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playTick(progress) {
+  const ctx = getAudioCtx();
+  const now = ctx.currentTime;
+  const freq = 1400 - progress * 700; // 1400 Hz → 700 Hz as it slows
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(freq, now);
+  gain.gain.setValueAtTime(0.06, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+  osc.start(now);
+  osc.stop(now + 0.035);
+}
+
+function playReveal() {
+  const ctx = getAudioCtx();
+  const now = ctx.currentTime;
+  // Descending robotic chirp
+  const osc1  = ctx.createOscillator();
+  const gain1 = ctx.createGain();
+  osc1.connect(gain1);
+  gain1.connect(ctx.destination);
+  osc1.type = 'sawtooth';
+  osc1.frequency.setValueAtTime(900, now);
+  osc1.frequency.exponentialRampToValueAtTime(220, now + 0.25);
+  gain1.gain.setValueAtTime(0.1, now);
+  gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+  osc1.start(now);
+  osc1.stop(now + 0.28);
+  // Confirming high ping
+  const osc2  = ctx.createOscillator();
+  const gain2 = ctx.createGain();
+  osc2.connect(gain2);
+  gain2.connect(ctx.destination);
+  osc2.type = 'sine';
+  osc2.frequency.setValueAtTime(1300, now + 0.18);
+  gain2.gain.setValueAtTime(0, now);
+  gain2.gain.setValueAtTime(0.09, now + 0.18);
+  gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+  osc2.start(now + 0.18);
+  osc2.stop(now + 0.42);
+}
+
 /* ── Page switching ────────────────────────────────────────── */
 function showPage(id) {
   ['page-landing','page-game','page-results'].forEach(p => {
@@ -853,12 +905,14 @@ function animateCountryReveal(finalName, onDone) {
       frame++;
       // Ease-out: starts at ~30 ms, ends at ~200 ms
       const t = frame / FRAMES;
+      playTick(t);
       const delay = 30 + t * t * 220;
       setTimeout(tick, delay);
     } else {
       // Land on the real country
       nameEl.textContent = finalName;
       flagEl.textContent = getFlag(finalName);
+      playReveal();
       nameEl.classList.remove('rolling');
       flagEl.classList.remove('rolling');
       nameEl.classList.add('revealed');

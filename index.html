@@ -721,10 +721,14 @@ function shuffle(arr) {
   return a;
 }
 
-/* Filter countries that have at least 3 non-null values */
-function eligibleCountries() {
+/* Exclude countries with 5+ nulls in this game's specific categories */
+function eligibleCountries(gameCats) {
+  const NULL_LIMIT = 5;
   return Object.entries(DB.countries)
-    .filter(([, arr]) => arr.filter(v => v !== null).length >= 3)
+    .filter(([, arr]) => {
+      const nulls = gameCats.filter(cat => arr[cat.dbIndex] === null).length;
+      return nulls < NULL_LIMIT;
+    })
     .map(([name]) => name);
 }
 
@@ -783,7 +787,7 @@ function startGame(gameId) {
     return { ...cat, dbIndex: DB.categories.indexOf(cat) };
   });
 
-  const pool = shuffle(eligibleCountries());
+  const pool = shuffle(eligibleCountries(cats));
   const drawn = pool.slice(0, 8);
 
   state = {

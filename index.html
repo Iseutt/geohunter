@@ -509,7 +509,10 @@
 <!-- ════════════════════════ GAME ════════════════════════ -->
 <div id="page-game" class="page hidden">
   <div class="game-topbar">
-    <span class="game-title" id="game-label">Test</span>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <button class="btn btn-ghost" id="btn-back-game" style="padding:8px 16px;font-size:13px;">← Back</button>
+      <span class="game-title" id="game-label">Test</span>
+    </div>
     <div class="score-pill">Score: <span class="score-val" id="score-display">0</span></div>
   </div>
   <div class="progress-wrap">
@@ -1184,6 +1187,10 @@ function showBestModal() {
 }
 
 /* ── Event listeners ───────────────────────────────────────── */
+document.getElementById('btn-back-game').addEventListener('click', () => {
+  showPage('page-landing');
+  buildLanding();
+});
 document.getElementById('btn-home').addEventListener('click', () => {
   showPage('page-landing');
   buildLanding();

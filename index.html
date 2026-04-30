@@ -387,6 +387,26 @@
     .rank-d  { background: rgba(239,68,68,.18);  color: #ef4444; }
     .rank-na { background: rgba(120,120,140,.2); color: var(--muted); }
 
+    .record-badge {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--accent);
+      margin-top: 10px;
+      animation: fade-in .5s ease;
+    }
+
+    .game-card-best {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .game-card-best.no-record { color: var(--muted); }
+
     .results-actions {
       display: flex;
       flex-wrap: wrap;
@@ -554,6 +574,7 @@
       <div class="results-score-max" id="results-max"></div>
     </div>
     <div class="results-grade" id="results-grade"></div>
+    <div class="record-badge hidden" id="results-record">🎉 New personal best!</div>
   </div>
 
   <div class="results-table-wrap">
@@ -724,6 +745,21 @@ function shuffle(arr) {
   return a;
 }
 
+/* ── Best score persistence ────────────────────────────────── */
+function getBestScore(gameId) {
+  const v = localStorage.getItem(`georank_best_${gameId}`);
+  return v !== null ? parseInt(v, 10) : null;
+}
+
+function saveBestScore(gameId, score) {
+  const current = getBestScore(gameId);
+  if (current === null || score < current) {
+    localStorage.setItem(`georank_best_${gameId}`, score);
+    return true;
+  }
+  return false;
+}
+
 /* Exclude countries with 5+ nulls in this game's specific categories */
 function eligibleCountries(gameCats) {
   const NULL_LIMIT = 5;
@@ -805,6 +841,10 @@ function buildLanding() {
     const cats = game.catIds.map(id => DB.categories.find(c => c.id === id));
     const card = document.createElement('div');
     card.className = 'game-card fade-in';
+    const best = getBestScore(game.id);
+    const bestHtml = best !== null
+      ? `<div class="game-card-best">🏅 Best score: <strong>${best}</strong></div>`
+      : `<div class="game-card-best no-record">No record yet</div>`;
     card.innerHTML = `
       <div class="game-card-icon">${game.icon}</div>
       <div class="game-card-name">${game.name}</div>
@@ -812,6 +852,7 @@ function buildLanding() {
       <div class="game-card-cats">
         ${cats.map(c => `<span class="cat-chip">${c.icon} ${c.label}</span>`).join('')}
       </div>
+      ${bestHtml}
     `;
     card.addEventListener('click', () => startGame(game.id));
     grid.appendChild(card);
@@ -1055,6 +1096,10 @@ function showResults() {
   const worst = state.categories.reduce((s, c) => s + c.total + 1, 0);
   // Theoretical best (lower bound): rank 1 in each category
   const best  = state.categories.length; // 8×1=8
+
+  const isNewRecord = saveBestScore(state.game.id, total);
+  const recordEl = document.getElementById('results-record');
+  recordEl.classList.toggle('hidden', !isNewRecord);
 
   document.getElementById('results-score').textContent = total;
   document.getElementById('results-max').textContent   = `(lower is better — best possible ≈ 8)`;

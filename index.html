@@ -406,6 +406,33 @@
     }
     .game-card-best.no-record { color: var(--muted); }
 
+    #hint-popup {
+      position: fixed;
+      top: 76px;
+      right: 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      z-index: 200;
+      max-width: 220px;
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity .25s, transform .25s;
+      pointer-events: none;
+    }
+    #hint-popup.visible { opacity: 1; transform: translateY(0); }
+    .hint-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .hint-cat-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+    .hint-rank-val { font-size: 13px; color: var(--muted); }
+
     .results-actions {
       display: flex;
       flex-wrap: wrap;
@@ -557,6 +584,12 @@
       <div class="rank-result-sub" id="rr-sub"></div>
       <div class="rank-qual-stars" id="rr-stars"></div>
     </div>
+  </div>
+
+  <div id="hint-popup">
+    <div class="hint-label">Best available</div>
+    <div id="hint-cat-name" class="hint-cat-name"></div>
+    <div id="hint-rank-val" class="hint-rank-val"></div>
   </div>
 
   <!-- Categories -->
@@ -1291,7 +1324,25 @@ function animateCountryReveal(finalName, onDone) {
   tick();
 }
 
+/* ── Hint popup ────────────────────────────────────────────── */
+function showHintPopup(country, availableCats) {
+  let bestCat = null, bestRank = Infinity;
+  availableCats.forEach(cat => {
+    const rank = getRank(country, cat.dbIndex);
+    if (rank !== null && rank < bestRank) { bestRank = rank; bestCat = cat; }
+  });
+  if (!bestCat) return;
+  document.getElementById('hint-cat-name').textContent = `${bestCat.icon} ${bestCat.label}`;
+  document.getElementById('hint-rank-val').textContent = `Rank #${bestRank}`;
+  document.getElementById('hint-popup').classList.add('visible');
+}
+
+function hideHintPopup() {
+  document.getElementById('hint-popup').classList.remove('visible');
+}
+
 function renderRound() {
+  hideHintPopup();
   const round = state.round;
   const name  = state.countries[round];
 
@@ -1337,6 +1388,10 @@ function assignCategory(catIndex) {
   const score     = getScore(country, cat.dbIndex);
   const isNA      = rank === null;
   const qual      = isNA ? null : rankQuality(rank, cat.total);
+
+  // Show hint popup before marking this cat used (so it's included in "remaining")
+  const availableCats = state.categories.filter((_, i) => !state.usedCats.has(i));
+  showHintPopup(country, availableCats);
 
   // Record assignment
   state.assignments.push({ country, catIndex, rank, score });

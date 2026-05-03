@@ -3,25 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GeoRank</title>
+  <title>GeoHunter</title>
   <style>
     /* ── Reset & base ─────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #080c14;
-      --surface:   #111827;
-      --card:      #1a2236;
-      --border:    #243050;
-      --accent:    #f0c040;
-      --accent2:   #e0a820;
-      --text:      #f0f4ff;
-      --muted:     #7a90b8;
-      --green:     #22c55e;
-      --amber:     #f59e0b;
-      --red:       #ef4444;
-      --radius:    14px;
-      --radius-sm: 8px;
+      --bg:        #03030a;
+      --surface:   #080815;
+      --card:      rgba(255,255,255,0.038);
+      --border:    rgba(129,140,248,0.18);
+      --accent:    #a78bfa;
+      --accent2:   #7c3aed;
+      --cyan:      #22d3ee;
+      --gold:      #fbbf24;
+      --text:      #f1f5f9;
+      --muted:     #64748b;
+      --green:     #34d399;
+      --amber:     #fbbf24;
+      --red:       #f87171;
+      --radius:    16px;
+      --radius-sm: 10px;
+      --glow:      rgba(129,140,248,0.22);
     }
 
     body {
@@ -31,6 +34,18 @@
       min-height: 100vh;
       overflow-x: hidden;
     }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 90% 60% at 15% 20%, rgba(124,58,237,0.07) 0%, transparent 55%),
+        radial-gradient(ellipse 70% 50% at 85% 80%, rgba(6,182,212,0.06) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 50% 110%, rgba(251,191,36,0.04) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body > * { position: relative; z-index: 1; }
 
     /* ── Utility ──────────────────────────────────────────────── */
     .hidden { display: none !important; }
@@ -60,47 +75,112 @@
       display: flex;
       align-items: center;
       gap: 14px;
-      padding: 20px 32px;
+      padding: 16px 32px;
       border-bottom: 1px solid var(--border);
-      background: var(--surface);
+      background: rgba(3,3,10,0.85);
+      backdrop-filter: blur(20px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
     .logo {
-      font-size: 26px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      background: linear-gradient(135deg, var(--accent), #ff9f40);
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, var(--accent), var(--cyan));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .logo-sub { font-size: 13px; color: var(--muted); font-weight: 400; }
+    .logo-sub { font-size: 12px; color: var(--muted); font-weight: 400; letter-spacing: 0.5px; }
 
     /* ── Pages ────────────────────────────────────────────────── */
     .page { min-height: calc(100vh - 65px); padding: 40px 24px; }
 
     /* ── Landing ──────────────────────────────────────────────── */
     #page-landing {
-      max-width: 900px;
+      max-width: 960px;
       margin: 0 auto;
+      padding-top: 0;
     }
-    .landing-title {
-      font-size: 42px;
-      font-weight: 800;
-      margin-bottom: 10px;
-      line-height: 1.1;
-    }
-    .landing-sub {
-      color: var(--muted);
-      font-size: 17px;
+    .hero {
+      position: relative;
+      text-align: center;
+      padding: 72px 24px 56px;
+      overflow: hidden;
       margin-bottom: 48px;
     }
-    .section-label {
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .hero-bg svg { width: 100%; height: 100%; opacity: 0.14; }
+    .hero-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 80% at 50% 50%, transparent 30%, var(--bg) 88%);
+    }
+    .hero-title {
+      position: relative;
+      font-size: clamp(52px, 10vw, 90px);
+      font-weight: 900;
+      letter-spacing: -2px;
+      line-height: 1;
+      background: linear-gradient(135deg, #c4b5fd 0%, #818cf8 30%, #22d3ee 65%, #fbbf24 100%);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: grad-shift 6s ease infinite;
+      margin-bottom: 18px;
+    }
+    .hero-sub {
+      position: relative;
+      font-size: 17px;
+      color: var(--muted);
+      max-width: 440px;
+      margin: 0 auto 28px;
+      line-height: 1.6;
+    }
+    .hero-badge {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 2px;
       text-transform: uppercase;
+      color: var(--cyan);
+      border: 1px solid rgba(34,211,238,0.3);
+      border-radius: 20px;
+      padding: 5px 14px;
+      margin-bottom: 22px;
+      background: rgba(34,211,238,0.05);
+    }
+    .hero-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+      animation: blink 1.4s ease infinite;
+    }
+    @keyframes blink      { 0%,100%{opacity:1} 50%{opacity:.2} }
+    @keyframes grad-shift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+    @keyframes map-draw   { from{stroke-dashoffset:600} to{stroke-dashoffset:0} }
+    @keyframes dot-pulse  { 0%,100%{opacity:.9} 50%{opacity:.2} }
+    @keyframes scan-move  { from{transform:translateX(-5%)} to{transform:translateX(105%)} }
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
       color: var(--muted);
       margin-bottom: 20px;
+      padding: 0 4px;
     }
     .games-grid {
       display: grid;
@@ -113,46 +193,63 @@
       border-radius: var(--radius);
       padding: 28px;
       cursor: pointer;
-      transition: border-color .2s, transform .2s, box-shadow .2s;
+      transition: border-color .3s, transform .3s, box-shadow .35s, background .3s;
       position: relative;
       overflow: hidden;
+      backdrop-filter: blur(12px);
     }
     .game-card::before {
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--accent), #ff9f40);
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--cyan));
       opacity: 0;
-      transition: opacity .2s;
+      transition: opacity .3s;
     }
-    .game-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,.5); }
+    .game-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(167,139,250,0.05) 0%, rgba(34,211,238,0.03) 100%);
+      opacity: 0;
+      transition: opacity .3s;
+      pointer-events: none;
+    }
+    .game-card:hover {
+      border-color: rgba(167,139,250,0.5);
+      transform: translateY(-5px);
+      box-shadow: 0 24px 64px rgba(0,0,0,.7), 0 0 48px rgba(167,139,250,0.08);
+      background: rgba(255,255,255,0.055);
+    }
     .game-card:hover::before { opacity: 1; }
-    .game-card.disabled { opacity: .4; cursor: not-allowed; pointer-events: none; }
-    .game-card-icon { font-size: 36px; margin-bottom: 14px; }
-    .game-card-name { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
-    .game-card-desc { font-size: 14px; color: var(--muted); margin-bottom: 18px; line-height: 1.5; }
-    .game-card-cats {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
+    .game-card:hover::after  { opacity: 1; }
+    .game-card.disabled { opacity: .35; cursor: not-allowed; pointer-events: none; }
+    .game-card-icon { font-size: 36px; margin-bottom: 14px; filter: drop-shadow(0 0 8px rgba(167,139,250,0.3)); }
+    .game-card-name { font-size: 22px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.3px; }
+    .game-card-desc { font-size: 14px; color: var(--muted); margin-bottom: 18px; line-height: 1.55; }
+    .game-card-cats { display: flex; flex-wrap: wrap; gap: 6px; }
     .cat-chip {
-      font-size: 12px;
+      font-size: 11px;
       padding: 3px 10px;
       border-radius: 20px;
-      background: rgba(255,255,255,.06);
-      color: var(--muted);
+      background: rgba(129,140,248,0.1);
+      border: 1px solid rgba(129,140,248,0.18);
+      color: #a5b4fc;
+      font-weight: 500;
     }
     .badge-soon {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
-      padding: 2px 8px;
+      padding: 3px 10px;
       border-radius: 20px;
-      background: rgba(120,120,140,.25);
-      color: var(--muted);
+      background: rgba(129,140,248,0.12);
+      border: 1px solid rgba(129,140,248,0.2);
+      color: var(--accent);
       position: absolute;
       top: 16px; right: 16px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
     }
 
     /* ── Game page ────────────────────────────────────────────── */
@@ -186,7 +283,7 @@
     .progress-bar-bg { height: 6px; background: var(--card); border-radius: 10px; }
     .progress-bar-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--accent), #ff9f40);
+      background: linear-gradient(90deg, var(--accent), var(--cyan));
       border-radius: 10px;
       transition: width .4s ease;
     }
@@ -216,12 +313,12 @@
     }
     /* Flash when final country lands */
     @keyframes country-land {
-      0%   { color: var(--accent); transform: scale(1.06); text-shadow: 0 0 24px rgba(240,192,64,.7); }
+      0%   { color: var(--accent); transform: scale(1.06); text-shadow: 0 0 28px rgba(167,139,250,.8); }
       100% { color: var(--text);   transform: scale(1);    text-shadow: none; }
     }
     .country-name.revealed { animation: country-land .55s ease forwards; }
     @keyframes flag-land {
-      0%   { transform: scale(1.12); filter: drop-shadow(0 0 12px rgba(240,192,64,.8)); }
+      0%   { transform: scale(1.12); filter: drop-shadow(0 0 14px rgba(167,139,250,.9)); }
       100% { transform: scale(1);    filter: none; }
     }
     .country-flag.revealed { animation: flag-land .55s ease forwards; }
@@ -539,16 +636,71 @@
 <!-- ════════════════════════ HEADER ════════════════════════ -->
 <header>
   <div>
-    <div class="logo">🌍 GeoRank</div>
-    <div class="logo-sub">How well do you know world rankings?</div>
+    <div class="logo">GeoHunter</div>
+    <div class="logo-sub">How well do you know the world?</div>
   </div>
 </header>
 
 <!-- ════════════════════════ LANDING ════════════════════════ -->
 <div id="page-landing" class="page">
-  <div class="landing-title">Pick a Game</div>
-  <div class="landing-sub">Each game gives you 8 countries — place each in the right category.</div>
-  <div class="section-label">— Available Games</div>
+
+  <div class="hero">
+    <div class="hero-bg">
+      <svg viewBox="0 0 360 180" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stop-color="#22d3ee" stop-opacity="0"/>
+            <stop offset="50%"  stop-color="#22d3ee" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <g stroke="#818cf8" stroke-width="0.25" opacity="0.5">
+          <line x1="0" y1="30"  x2="360" y2="30"/>
+          <line x1="0" y1="60"  x2="360" y2="60"/>
+          <line x1="0" y1="90"  x2="360" y2="90"/>
+          <line x1="0" y1="120" x2="360" y2="120"/>
+          <line x1="0" y1="150" x2="360" y2="150"/>
+          <line x1="60"  y1="0" x2="60"  y2="180"/>
+          <line x1="120" y1="0" x2="120" y2="180"/>
+          <line x1="180" y1="0" x2="180" y2="180"/>
+          <line x1="240" y1="0" x2="240" y2="180"/>
+          <line x1="300" y1="0" x2="300" y2="180"/>
+        </g>
+        <g fill="rgba(129,140,248,0.18)" stroke="#a78bfa" stroke-width="0.6"
+           stroke-dasharray="600" stroke-dashoffset="600"
+           style="animation:map-draw 3.5s ease forwards">
+          <path d="M12,36 L14,22 L42,20 L90,24 L126,43 L113,46 L99,65 L92,75 L101,81 L76,71 L58,53 L50,36 Z"/>
+          <path d="M103,79 L117,79 L131,90 L145,98 L140,113 L122,124 L112,145 L104,140 L99,95 L102,88 Z" style="animation-delay:.25s"/>
+          <path d="M171,52 L175,54 L183,46 L193,52 L207,50 L218,42 L220,32 L207,20 L190,27 L177,35 Z" style="animation-delay:.1s"/>
+          <path d="M175,54 L163,75 L165,81 L189,95 L198,125 L213,117 L220,100 L231,79 L213,59 L200,57 L190,53 Z" style="animation-delay:.2s"/>
+          <path d="M222,52 L234,64 L252,68 L260,82 L280,85 L290,89 L305,80 L315,56 L322,46 L340,30 L350,22 L300,16 L250,18 L220,28 Z" style="animation-delay:.15s"/>
+          <path d="M294,112 L316,102 L325,105 L331,114 L328,128 L312,128 L294,124 Z" style="animation-delay:.4s"/>
+          <path d="M125,14 L160,13 L155,29 L128,30 Z" style="animation-delay:.05s"/>
+        </g>
+        <g fill="#22d3ee">
+          <circle cx="106" cy="49" r="1.4" style="animation:dot-pulse 2.2s 0.0s  infinite"/>
+          <circle cx="180" cy="39" r="1.4" style="animation:dot-pulse 2.2s 0.3s  infinite"/>
+          <circle cx="315" cy="56" r="1.4" style="animation:dot-pulse 2.2s 0.6s  infinite"/>
+          <circle cx="252" cy="68" r="1.4" style="animation:dot-pulse 2.2s 0.9s  infinite"/>
+          <circle cx="211" cy="59" r="1.4" style="animation:dot-pulse 2.2s 0.15s infinite"/>
+          <circle cx="183" cy="46" r="1.4" style="animation:dot-pulse 2.2s 0.45s infinite"/>
+          <circle cx="220" cy="32" r="1.4" style="animation:dot-pulse 2.2s 0.75s infinite"/>
+          <circle cx="140" cy="113" r="1.4" style="animation:dot-pulse 2.2s 1.0s  infinite"/>
+          <circle cx="280" cy="85" r="1.4" style="animation:dot-pulse 2.2s 1.1s  infinite"/>
+          <circle cx="198" cy="125" r="1.4" style="animation:dot-pulse 2.2s 1.2s  infinite"/>
+          <circle cx="331" cy="114" r="1.4" style="animation:dot-pulse 2.2s 1.3s  infinite"/>
+          <circle cx="71"  cy="55"  r="1.4" style="animation:dot-pulse 2.2s 0.2s  infinite"/>
+        </g>
+        <rect x="0" y="0" width="18" height="180" fill="url(#sg)" opacity="0.5"
+              style="animation:scan-move 9s linear infinite"/>
+      </svg>
+    </div>
+    <div class="hero-badge">World Rankings</div>
+    <div class="hero-title">GeoHunter</div>
+    <div class="hero-sub">8 countries. 8 categories. Can you rank the world?</div>
+  </div>
+
+  <div class="section-label">&#8212; Choose a Game</div>
   <div class="games-grid" id="games-grid"></div>
 </div>
 
@@ -557,7 +709,7 @@
   <div class="game-topbar">
     <div style="display:flex;align-items:center;gap:14px;">
       <button class="btn btn-ghost" id="btn-back-game" style="padding:8px 16px;font-size:13px;">← Back</button>
-      <span class="game-title" id="game-label">Test</span>
+      <span class="game-title" id="game-label">World Classic</span>
     </div>
     <div class="score-pill">Score: <span class="score-val" id="score-display">0</span></div>
   </div>
@@ -986,8 +1138,8 @@ const RANKINGS = (() => {
 const GAMES = {
   test: {
     id:          'test',
-    name:        'Test',
-    icon:        '🧪',
+    name:        'World Classic',
+    icon:        '🌐',
     description: 'A global mix of 8 categories — football, economy, nature, crime, geography and more.',
     catIds:      ['football','cars','gdp','immigrants','drugs','biodiversity','murders','elevation'],
   }

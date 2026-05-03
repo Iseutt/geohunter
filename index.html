@@ -238,6 +238,19 @@
       color: #a5b4fc;
       font-weight: 500;
     }
+    .badge-daily {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(34,211,238,0.12);
+      border: 1px solid rgba(34,211,238,0.3);
+      color: var(--cyan);
+      position: absolute;
+      top: 16px; right: 16px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
     .badge-soon {
       font-size: 10px;
       font-weight: 700;
@@ -301,8 +314,9 @@
       transition: opacity .3s;
     }
     .country-card.fading { opacity: 0; }
-    .country-flag { font-size: 72px; margin-bottom: 12px; display: block; transition: filter .12s; }
-    .country-name { font-size: 36px; font-weight: 800; margin-bottom: 6px; transition: color .12s; }
+    .country-reveal-row { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 16px; margin-bottom: 6px; }
+    .country-flag { font-size: 64px; transition: filter .12s; line-height: 1; }
+    .country-name { font-size: 36px; font-weight: 800; transition: color .12s; }
     .country-prompt { font-size: 15px; color: var(--muted); }
 
     /* Slot-machine roll state */
@@ -725,8 +739,10 @@
 
   <!-- Country card -->
   <div class="country-card" id="country-card">
-    <span class="country-flag" id="country-flag">🌍</span>
-    <div class="country-name" id="country-name">—</div>
+    <div class="country-reveal-row">
+      <span class="country-flag" id="country-flag">🌍</span>
+      <div class="country-name" id="country-name">—</div>
+    </div>
     <div class="country-prompt" id="country-prompt">Assign this country to a category below</div>
     <!-- Rank result overlay -->
     <div class="rank-result" id="rank-result">
@@ -1148,6 +1164,27 @@ const GAMES = {
   */
 };
 
+/* ── Daily challenge (date-seeded 6 categories) ─────────────── */
+(function() {
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const seed    = dateStr.split('-').reduce((a, b) => a * 1000 + parseInt(b), 0);
+  let s = seed;
+  function lcgRand() { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0x100000000; }
+  const allIds = DB.categories.map(c => c.id);
+  for (let i = allIds.length - 1; i > 0; i--) {
+    const j = Math.floor(lcgRand() * (i + 1));
+    [allIds[i], allIds[j]] = [allIds[j], allIds[i]];
+  }
+  GAMES[`daily_${dateStr}`] = {
+    id:          `daily_${dateStr}`,
+    name:        'Daily Challenge',
+    icon:        '🗓️',
+    description: `6 categories, same for everyone. Resets at midnight.`,
+    catIds:      allIds.slice(0, 6),
+    isDaily:     true,
+  };
+})();
+
 /* ── State ─────────────────────────────────────────────────── */
 let state = {
   game:           null,   // game config
@@ -1349,6 +1386,7 @@ function buildLanding() {
       ? `<div class="game-card-best">🏅 Best score: <strong>${best}</strong></div>`
       : `<div class="game-card-best no-record">No record yet</div>`;
     card.innerHTML = `
+      ${game.isDaily ? '<span class="badge-daily">Daily</span>' : ''}
       <div class="game-card-icon">${game.icon}</div>
       <div class="game-card-name">${game.name}</div>
       <div class="game-card-desc">${game.description}</div>
@@ -1499,9 +1537,9 @@ function renderRound() {
   const name  = state.countries[round];
 
   document.getElementById('country-prompt').textContent = 'Assign this country to a category below';
-  document.getElementById('round-label').textContent = `Round ${round + 1} of 8`;
+  document.getElementById('round-label').textContent = `Round ${round + 1} of ${state.categories.length}`;
   document.getElementById('round-hint').textContent = 'Selecting country…';
-  document.getElementById('progress-fill').style.width = `${(round / 8) * 100}%`;
+  document.getElementById('progress-fill').style.width = `${(round / state.categories.length) * 100}%`;
   document.getElementById('score-display').textContent = state.totalScore;
 
   // Hide result overlay
@@ -1603,7 +1641,7 @@ function assignCategory(catIndex) {
       }
     });
     state.round++;
-    if (state.round < 8) {
+    if (state.round < state.categories.length) {
       // Fade out card then render next
       const card = document.getElementById('country-card');
       card.classList.add('fading');
@@ -1627,7 +1665,7 @@ function showResults() {
   recordEl.classList.toggle('hidden', !isNewRecord);
 
   document.getElementById('results-score').textContent = total;
-  document.getElementById('results-max').textContent   = `(lower is better — best possible ≈ 8)`;
+  document.getElementById('results-max').textContent   = `(lower is better — best possible ≈ ${state.categories.length})`;
 
   // Grade
   const pct = (total - best) / (worst - best);
@@ -1672,7 +1710,7 @@ function showResults() {
 
 /* ── Best solution (brute-force 8! permutations) ───────────── */
 function computeBestSolution() {
-  const n      = 8;
+  const n      = state.categories.length;
   const cats   = state.categories;
   const ctries = state.countries;
 
@@ -1683,7 +1721,7 @@ function computeBestSolution() {
 
   let bestScore = Infinity;
   let bestPerm  = null;
-  const perm    = [0,1,2,3,4,5,6,7];
+  const perm    = Array.from({length: n}, (_, i) => i);
 
   function permute(arr, l) {
     if (l === n) {
@@ -1712,7 +1750,7 @@ function showBestModal() {
   document.getElementById('modal-best-score').textContent = bestScore;
 
   // Build inverted perm: invPerm[catIdx] = countryIdx in optimal assignment
-  const invPerm = new Array(8);
+  const invPerm = new Array(state.categories.length);
   perm.forEach((catIdx, countryIdx) => { invPerm[catIdx] = countryIdx; });
 
   const tbody = document.getElementById('modal-tbody');

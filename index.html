@@ -1489,7 +1489,8 @@ function buildLanding() {
 
   // Active games
   Object.values(GAMES).forEach(game => {
-    const cats = game.catIds.map(id => DB.categories.find(c => c.id === id));
+    const activeDb = game.db || DB;
+    const cats = game.catIds.map(id => activeDb.categories.find(c => c.id === id));
     const card = document.createElement('div');
     card.className = 'game-card fade-in';
     const best = getBestScore(game.id);

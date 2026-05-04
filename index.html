@@ -1150,6 +1150,57 @@ const RANKINGS = (() => {
   return out;
 })();
 
+/* ── France database (inlined from database-france.js) ──────── */
+const DB_FRANCE = {
+  categories: [
+    { id:'foot',        label:'Football',    icon:'⚽',  total:101, color:'#22c55e', source:'Ligue 1/2/National 2024-25', description:'Classé selon le meilleur club du département et son niveau.' },
+    { id:'crime',       label:'Criminalité', icon:'🔪',  total:101, color:'#ef4444', source:'SSMSI — Interstats 2023', description:'Taux de crimes enregistrés pour 1 000 habitants. Rang 1 = plus de crimes.' },
+    { id:'temperature', label:'Température', icon:'🌡️', total:101, color:'#f59e0b', source:'Météo-France — normales 1991-2020', description:'Température annuelle moyenne. Rang 1 = département le plus chaud.' },
+    { id:'natalite',    label:'Natalité',    icon:'👶',  total:101, color:'#ec4899', source:'INSEE — État civil 2022', description:'Taux de natalité (naissances pour 1 000 habitants). Rang 1 = taux le plus élevé.' },
+    { id:'population',  label:'Population',  icon:'👥',  total:101, color:'#60a5fa', source:'INSEE — Recensement 2021', description:'Nombre total d\'habitants. Rang 1 = département le plus peuplé.' },
+    { id:'education',   label:'Éducation',   icon:'🎓',  total:101, color:'#a78bfa', source:'MESRI — Répertoire 2023', description:'Établissements d\'enseignement supérieur. Rang 1 = le plus d\'établissements.' },
+    { id:'cuisine',     label:'Gastronomie', icon:'🍽️', total:101, color:'#fbbf24', source:'Guide Michelin 2024', description:'Qualité gastronomique (étoiles Michelin + réputation régionale). Rang 1 = meilleure cuisine.' },
+    { id:'tourisme',    label:'Tourisme',    icon:'✈️',  total:101, color:'#22d3ee', source:'INSEE — nuitées touristiques 2023', description:'Attractivité touristique (nuitées, sites, fréquentation). Rang 1 = le plus visité.' },
+  ],
+  departments: {
+    'Paris':[1,4,60,20,2,1,2,1],'Seine-et-Marne':[71,7,68,28,11,30,65,45],'Yvelines':[70,9,65,35,8,22,48,22],
+    'Essonne':[69,6,65,22,14,20,60,42],'Hauts-de-Seine':[73,14,62,30,6,15,20,30],'Seine-Saint-Denis':[34,1,65,3,5,32,85,72],
+    'Val-de-Marne':[29,5,63,25,12,28,52,50],"Val-d'Oise":[72,10,65,22,17,35,60,65],
+    'Nord':[2,3,78,5,1,7,34,20],'Pas-de-Calais':[5,11,78,8,9,28,40,42],
+    'Somme':[25,20,77,42,58,58,72,45],'Oise':[47,27,80,35,43,42,58,55],'Aisne':[59,68,75,58,70,75,72,78],
+    'Marne':[14,32,80,45,48,15,28,35],'Ardennes':[35,66,97,82,81,82,82,88],'Aube':[20,72,80,62,76,68,58,65],'Haute-Marne':[82,82,82,92,91,91,80,85],
+    'Moselle':[17,25,86,38,20,35,55,65],'Meurthe-et-Moselle':[33,62,84,58,45,14,52,62],'Meuse':[87,84,85,90,88,94,85,82],'Vosges':[64,72,96,72,75,82,65,60],
+    'Bas-Rhin':[10,26,87,25,21,8,19,15],'Haut-Rhin':[50,52,88,40,50,45,26,30],
+    'Seine-Maritime':[12,29,73,30,26,13,44,35],'Eure':[49,52,72,50,65,72,62,72],
+    'Calvados':[22,40,70,45,50,16,30,29],'Manche':[58,63,70,52,56,58,45,32],'Orne':[65,78,68,68,76,78,58,70],
+    'Ille-et-Vilaine':[7,22,40,22,19,6,7,10],'Finistère':[13,45,38,32,42,12,8,28],'Morbihan':[15,42,37,35,46,48,17,17],"Côtes-d'Armor":[27,72,42,40,64,62,12,32],
+    'Loire-Atlantique':[8,28,34,18,13,11,13,13],'Maine-et-Loire':[19,35,35,28,32,25,36,38],'Sarthe':[36,48,68,50,54,55,55,40],'Vendée':[60,35,31,30,47,50,54,26],'Mayenne':[37,78,68,45,66,65,60,82],
+    'Loiret':[39,46,55,42,44,32,52,58],'Eure-et-Loir':[51,58,72,52,68,73,62,75],'Indre-et-Loire':[41,48,36,48,55,20,25,20],'Loir-et-Cher':[77,75,47,78,78,80,55,52],'Cher':[79,65,50,85,75,76,68,72],'Indre':[85,90,50,95,92,92,85,88],
+    "Côte-d'Or":[43,58,55,62,62,16,10,18],'Saône-et-Loire':[46,65,48,70,61,60,32,50],'Yonne':[26,65,58,72,77,75,35,55],'Nièvre':[88,90,58,92,89,90,78,78],
+    'Doubs':[23,70,90,55,63,55,48,55],'Jura':[86,85,92,78,86,85,38,65],'Haute-Saône':[89,88,88,80,90,90,70,80],'Territoire de Belfort':[81,70,89,68,97,92,70,82],
+    'Rhône':[4,11,32,12,4,2,1,8],'Ain':[42,62,34,48,57,52,14,46],'Loire':[16,30,33,35,40,38,42,48],'Isère':[21,25,53,32,16,9,20,15],'Drôme':[48,55,30,45,60,65,40,42],'Ardèche':[74,60,32,50,83,77,50,48],'Savoie':[54,78,93,45,67,62,13,16],'Haute-Savoie':[45,80,94,38,35,40,3,4],
+    'Puy-de-Dôme':[24,48,46,50,38,13,42,22],'Allier':[68,55,46,80,78,72,68,70],'Haute-Loire':[94,82,44,75,84,88,58,72],'Cantal':[90,96,88,92,96,93,52,72],
+    'Haute-Vienne':[63,42,51,68,58,19,62,70],'Corrèze':[67,78,52,88,82,80,62,62],'Creuse':[91,95,62,97,100,96,88,92],
+    'Gironde':[18,16,23,20,7,4,5,8],'Dordogne':[84,72,22,68,74,80,28,25],'Lot-et-Garonne':[76,75,20,68,71,82,44,62],'Landes':[75,68,18,55,72,75,48,38],'Pyrénées-Atlantiques':[30,65,25,42,53,50,17,27],
+    'Haute-Garonne':[6,17,24,10,10,5,11,12],'Tarn-et-Garonne':[83,68,19,62,78,82,50,65],'Tarn':[61,62,26,55,69,72,45,58],'Aveyron':[40,88,44,65,80,82,32,55],'Lot':[80,85,21,80,87,86,30,40],'Gers':[80,88,17,70,85,88,22,60],'Hautes-Pyrénées':[66,78,52,65,80,78,52,32],'Ariège':[78,70,28,75,95,86,60,60],
+    'Hérault':[9,12,10,15,15,6,16,6],'Gard':[31,13,12,25,52,58,36,36],'Aude':[55,44,15,52,77,78,42,35],'Pyrénées-Orientales':[44,14,11,22,51,65,40,24],'Lozère':[95,98,80,95,101,97,68,70],
+    'Bouches-du-Rhône':[3,2,13,18,3,10,6,5],'Var':[52,42,9,25,41,48,9,3],'Alpes-Maritimes':[11,15,8,30,18,17,4,2],'Vaucluse':[53,40,14,38,52,55,22,20],'Alpes-de-Haute-Provence':[92,78,16,65,93,88,45,38],'Hautes-Alpes':[93,86,98,72,98,90,55,30],
+    'Charente-Maritime':[57,38,28,42,55,60,35,22],'Charente':[56,62,30,58,70,70,38,58],'Vienne':[62,58,41,60,60,45,58,68],'Deux-Sèvres':[38,73,42,55,73,72,62,80],
+    'Corse-du-Sud':[28,72,6,35,88,72,15,8],'Haute-Corse':[32,65,7,38,90,76,18,14],
+    'Guadeloupe':[97,23,4,4,38,62,20,11],'Martinique':[98,24,3,6,48,58,26,12],'Guyane':[99,55,2,2,56,70,78,80],'La Réunion':[100,38,5,8,34,38,16,10],'Mayotte':[101,88,1,1,54,88,88,88],
+  },
+};
+
+const RANKINGS_FRANCE = (() => {
+  const out = DB_FRANCE.categories.map((cat, ci) => {
+    return Object.entries(DB_FRANCE.departments)
+      .filter(([, v]) => v[ci] !== null)
+      .sort((a, b) => a[1][ci] - b[1][ci])
+      .map(([name, v]) => ({ country: name, rank: v[ci] }));
+  });
+  return out;
+})();
+
 /* ── Game definitions ──────────────────────────────────────── */
 const GAMES = {
   test: {
@@ -1158,10 +1209,17 @@ const GAMES = {
     icon:        '🌐',
     description: 'A global mix of 8 categories — football, economy, nature, crime, geography and more.',
     catIds:      ['football','cars','gdp','immigrants','drugs','biodiversity','murders','elevation'],
-  }
-  /* Add future games here:
-  geo2: { id:'geo2', name:'Geography II', icon:'🌋', description:'...', catIds:[...] }
-  */
+  },
+  france: {
+    id:           'france',
+    name:         'France Classic',
+    icon:         '🇫🇷',
+    description:  '96 départements, 8 catégories — foot, crime, météo, gastronomie et plus.',
+    catIds:       ['foot','crime','temperature','natalite','population','education','cuisine','tourisme'],
+    db:           DB_FRANCE,
+    entityKey:    'departments',
+    entityIconFn: getDeptCode,
+  },
 };
 
 /* ── Daily challenge (date-seeded 6 categories) ─────────────── */
@@ -1182,6 +1240,30 @@ const GAMES = {
     description: `6 categories, same for everyone. Resets at midnight.`,
     catIds:      allIds.slice(0, 6),
     isDaily:     true,
+  };
+})();
+
+/* ── France daily challenge (date-seeded 6 categories) ──────── */
+(function() {
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const seed    = dateStr.split('-').reduce((a, b) => a * 1000 + parseInt(b), 0) + 77777;
+  let s = seed;
+  function lcgRand() { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0x100000000; }
+  const allIds = DB_FRANCE.categories.map(c => c.id);
+  for (let i = allIds.length - 1; i > 0; i--) {
+    const j = Math.floor(lcgRand() * (i + 1));
+    [allIds[i], allIds[j]] = [allIds[j], allIds[i]];
+  }
+  GAMES[`france_daily_${dateStr}`] = {
+    id:           `france_daily_${dateStr}`,
+    name:         'France du Jour',
+    icon:         '🗓️',
+    description:  `6 catégories françaises, identiques pour tous. Renouvellement à minuit.`,
+    catIds:       allIds.slice(0, 6),
+    isDaily:      true,
+    db:           DB_FRANCE,
+    entityKey:    'departments',
+    entityIconFn: getDeptCode,
   };
 })();
 
@@ -1243,14 +1325,43 @@ function getFlag(name) {
   ).join('');
 }
 
+function getDeptCode(name) {
+  const codes = {
+    'Ain':'01','Aisne':'02','Allier':'03','Alpes-de-Haute-Provence':'04','Hautes-Alpes':'05',
+    'Alpes-Maritimes':'06','Ardèche':'07','Ardennes':'08','Ariège':'09','Aube':'10',
+    'Aude':'11','Aveyron':'12','Bouches-du-Rhône':'13','Calvados':'14','Cantal':'15',
+    'Charente':'16','Charente-Maritime':'17','Cher':'18','Corrèze':'19',
+    'Corse-du-Sud':'2A','Haute-Corse':'2B',
+    "Côte-d'Or":'21',"Côtes-d'Armor":'22','Creuse':'23','Dordogne':'24','Doubs':'25',
+    'Drôme':'26','Eure':'27','Eure-et-Loir':'28','Finistère':'29','Gard':'30',
+    'Haute-Garonne':'31','Gers':'32','Gironde':'33','Hérault':'34','Ille-et-Vilaine':'35',
+    'Indre':'36','Indre-et-Loire':'37','Isère':'38','Jura':'39','Landes':'40',
+    'Loir-et-Cher':'41','Loire':'42','Haute-Loire':'43','Loire-Atlantique':'44','Loiret':'45',
+    'Lot':'46','Lot-et-Garonne':'47','Lozère':'48','Maine-et-Loire':'49','Manche':'50',
+    'Marne':'51','Haute-Marne':'52','Mayenne':'53','Meurthe-et-Moselle':'54','Meuse':'55',
+    'Morbihan':'56','Moselle':'57','Nièvre':'58','Nord':'59','Oise':'60',
+    'Orne':'61','Pas-de-Calais':'62','Puy-de-Dôme':'63','Pyrénées-Atlantiques':'64',
+    'Hautes-Pyrénées':'65','Pyrénées-Orientales':'66','Bas-Rhin':'67','Haut-Rhin':'68',
+    'Rhône':'69','Haute-Saône':'70','Saône-et-Loire':'71','Sarthe':'72',
+    'Savoie':'73','Haute-Savoie':'74','Paris':'75','Seine-Maritime':'76',
+    'Seine-et-Marne':'77','Yvelines':'78','Deux-Sèvres':'79','Somme':'80',
+    'Tarn':'81','Tarn-et-Garonne':'82','Var':'83','Vaucluse':'84','Vendée':'85',
+    'Vienne':'86','Haute-Vienne':'87','Vosges':'88','Yonne':'89',
+    'Territoire de Belfort':'90','Essonne':'91','Hauts-de-Seine':'92',
+    'Seine-Saint-Denis':'93','Val-de-Marne':'94',"Val-d'Oise":'95',
+    'Guadeloupe':'971','Martinique':'972','Guyane':'973','La Réunion':'974','Mayotte':'976',
+  };
+  return codes[name] || '??';
+}
+
 function getCategoryIndex(game, catId) {
   return DB.categories.findIndex(c => c.id === catId);
 }
 
 const SCORE_CAP = 100; // ranks above this, and N/A, all score exactly 100
 
-function getRank(countryName, catDbIndex) {
-  const data = DB.countries[countryName];
+function getRank(name, catDbIndex) {
+  const data = state.db[state.entityKey][name];
   if (!data) return null;
   return data[catDbIndex] ?? null;
 }
@@ -1300,10 +1411,10 @@ function saveBestScore(gameId, score) {
   return false;
 }
 
-/* Exclude countries with 5+ nulls in this game's specific categories */
-function eligibleCountries(gameCats) {
+/* Exclude entities with 5+ nulls in this game's specific categories */
+function eligibleEntities(db, entityKey, gameCats) {
   const NULL_LIMIT = 5;
-  return Object.entries(DB.countries)
+  return Object.entries(db[entityKey])
     .filter(([, arr]) => {
       const nulls = gameCats.filter(cat => arr[cat.dbIndex] === null).length;
       return nulls < NULL_LIMIT;
@@ -1419,23 +1530,30 @@ function buildLanding() {
 
 /* ── Start game ────────────────────────────────────────────── */
 function startGame(gameId) {
-  const game = GAMES[gameId];
+  const game     = GAMES[gameId];
+  const activeDb = game.db || DB;
+  const entKey   = game.entityKey || 'countries';
+  const iconFn   = game.entityIconFn || getFlag;
+
   const cats = game.catIds.map(id => {
-    const cat = DB.categories.find(c => c.id === id);
-    return { ...cat, dbIndex: DB.categories.indexOf(cat) };
+    const cat = activeDb.categories.find(c => c.id === id);
+    return { ...cat, dbIndex: activeDb.categories.indexOf(cat) };
   });
 
-  const pool = shuffle(eligibleCountries(cats));
+  const pool  = shuffle(eligibleEntities(activeDb, entKey, cats));
   const drawn = pool.slice(0, 8);
 
   state = {
     game,
-    categories: cats,
-    countries:  drawn,
-    round:      0,
-    assignments:[],
-    usedCats:   new Set(),
-    totalScore: 0,
+    categories:   cats,
+    countries:    drawn,
+    round:        0,
+    assignments:  [],
+    usedCats:     new Set(),
+    totalScore:   0,
+    db:           activeDb,
+    entityKey:    entKey,
+    entityIconFn: iconFn,
   };
 
   document.getElementById('game-label').textContent = game.name;
@@ -1469,7 +1587,7 @@ function buildCategoryButtons() {
 function animateCountryReveal(finalName, onDone) {
   const nameEl    = document.getElementById('country-name');
   const flagEl    = document.getElementById('country-flag');
-  const allNames  = Object.keys(DB.countries);
+  const allNames  = Object.keys(state.db[state.entityKey]);
   const FRAMES    = 26;
   let   frame     = 0;
 
@@ -1487,7 +1605,7 @@ function animateCountryReveal(finalName, onDone) {
     if (frame < FRAMES) {
       const rand = allNames[Math.floor(Math.random() * allNames.length)];
       nameEl.textContent = rand;
-      flagEl.textContent = getFlag(rand);
+      flagEl.textContent = state.entityIconFn(rand);
       frame++;
       // Ease-out: starts at ~30 ms, ends at ~200 ms
       const t = frame / FRAMES;
@@ -1497,7 +1615,7 @@ function animateCountryReveal(finalName, onDone) {
     } else {
       // Land on the real country
       nameEl.textContent = finalName;
-      flagEl.textContent = getFlag(finalName);
+      flagEl.textContent = state.entityIconFn(finalName);
       playReveal();
       nameEl.classList.remove('rolling');
       flagEl.classList.remove('rolling');
@@ -1692,7 +1810,7 @@ function showResults() {
     tbody.innerHTML += `
       <tr>
         <td><div class="td-cat"><span class="td-cat-icon">${cat.icon}</span>${cat.label}</div></td>
-        <td><div class="td-flag-name"><span class="td-flag">${getFlag(country)}</span>${country}</div></td>
+        <td><div class="td-flag-name"><span class="td-flag">${state.entityIconFn(country)}</span>${country}</div></td>
         <td><span class="rank-badge ${cls}">${label}</span></td>
         <td style="font-weight:700;color:${score <= 10 ? 'var(--green)' : score <= 50 ? 'var(--amber)' : 'var(--red)'}">${score}</td>
       </tr>`;
@@ -1779,12 +1897,12 @@ function showBestModal() {
       <tr>
         <td>${cat.icon} ${cat.label}</td>
         <td>
-          <span style="font-size:18px">${getFlag(bestCtry)}</span> ${bestCtry}
+          <span style="font-size:18px">${state.entityIconFn(bestCtry)}</span> ${bestCtry}
           <span style="color:var(--muted);font-size:12px">(${fmtRank(bestRank)})</span>
         </td>
         <td style="font-weight:700">${bestScoreV}</td>
         <td>
-          <span style="font-size:15px">${getFlag(playerCtry)}</span> ${playerCtry}
+          <span style="font-size:15px">${state.entityIconFn(playerCtry)}</span> ${playerCtry}
           <span style="color:var(--muted);font-size:12px">(${fmtRank(assignment.rank)})</span>
         </td>
         <td class="${diffCls}">${diffStr}</td>

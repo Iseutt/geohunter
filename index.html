@@ -643,6 +643,70 @@
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+    /* ── France info row ──────────────────────────────────────── */
+    #entity-display-row {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    #entity-display-row .country-card {
+      flex: 1 1 0;
+      min-width: 0;
+      max-width: none;
+    }
+    .france-side-panel {
+      flex: 0 0 185px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .france-panel-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      color: var(--muted);
+      text-transform: uppercase;
+      text-align: center;
+    }
+    #france-map-svg { width: 100%; height: auto; display: block; }
+    .france-cities-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow-y: auto;
+      max-height: 218px;
+    }
+    .city-tag {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      padding: 4px 8px;
+      background: rgba(167,139,250,.1);
+      border: 1px solid rgba(167,139,250,.18);
+      border-radius: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    @keyframes dept-pulse {
+      0%   { transform: scale(1);   opacity: .75; }
+      100% { transform: scale(2.8); opacity: 0;   }
+    }
+    .dept-dot-pulse {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: dept-pulse 1.5s ease-out infinite;
+      pointer-events: none;
+    }
+    @media (max-width: 720px) {
+      #entity-display-row { flex-direction: column; align-items: stretch; }
+      .france-side-panel { flex: none; }
+    }
   </style>
 </head>
 <body>
@@ -737,6 +801,26 @@
     </div>
   </div>
 
+  <!-- Entity display row (France games add side panels) -->
+  <div id="entity-display-row">
+
+  <!-- France map panel (left) -->
+  <div id="france-map-panel" class="france-side-panel hidden">
+    <div class="france-panel-title">Localisation</div>
+    <svg id="france-map-svg" viewBox="0 0 290 310" xmlns="http://www.w3.org/2000/svg">
+      <!-- Continental France outline -->
+      <polygon points="13,87 36,80 70,54 101,57 133,15 145,14 187,21 211,57 229,65 241,71 240,83 236,113 208,147 207,157 222,163 233,222 198,235 166,231 152,251 67,232 73,217 80,170 59,128 60,120 40,110 18,89"
+        fill="rgba(129,140,248,0.08)" stroke="rgba(129,140,248,0.5)" stroke-width="1.5" stroke-linejoin="round"/>
+      <!-- Corsica -->
+      <polygon points="262,252 265,248 268,258 265,270 260,270 256,260"
+        fill="rgba(129,140,248,0.08)" stroke="rgba(129,140,248,0.4)" stroke-width="1.2" stroke-linejoin="round"/>
+      <!-- DROM inset box -->
+      <rect x="4" y="260" width="82" height="24" fill="none" stroke="rgba(100,116,139,0.35)" stroke-width="1" stroke-dasharray="3,2" rx="3"/>
+      <text x="45" y="258" text-anchor="middle" fill="rgba(100,116,139,0.6)" font-size="6.5" font-family="sans-serif">DROM</text>
+      <g id="france-dept-dots"></g>
+    </svg>
+  </div>
+
   <!-- Country card -->
   <div class="country-card" id="country-card">
     <div class="country-reveal-row">
@@ -753,6 +837,14 @@
       <div class="rank-qual-stars" id="rr-stars"></div>
     </div>
   </div>
+
+  <!-- France cities panel (right) -->
+  <div id="france-cities-panel" class="france-side-panel hidden">
+    <div class="france-panel-title">Grandes villes (20 000+ hab.)</div>
+    <div class="france-cities-list" id="france-cities-list"></div>
+  </div>
+
+  </div><!-- /entity-display-row -->
 
   <div id="hint-popup">
     <div class="hint-label">Best available</div>
@@ -1201,6 +1293,148 @@ const RANKINGS_FRANCE = (() => {
   return out;
 })();
 
+/* ── France dept dot coordinates (SVG viewBox 290×310) ──────── */
+const DEPT_COORDS = {
+  'Paris':[142,76],'Seine-et-Marne':[155,83],'Yvelines':[133,80],
+  'Essonne':[139,87],'Hauts-de-Seine':[138,76],'Seine-Saint-Denis':[144,73],
+  'Val-de-Marne':[145,79],"Val-d'Oise":[137,69],
+  'Nord':[157,29],'Pas-de-Calais':[141,29],
+  'Somme':[141,46],'Oise':[143,60],'Aisne':[163,57],
+  'Marne':[172,71],'Ardennes':[184,51],'Aube':[173,91],'Haute-Marne':[192,97],
+  'Moselle':[215,71],'Meurthe-et-Moselle':[211,80],'Meuse':[197,69],'Vosges':[217,94],
+  'Bas-Rhin':[237,83],'Haut-Rhin':[231,103],
+  'Seine-Maritime':[119,51],'Eure':[119,69],
+  'Calvados':[94,69],'Manche':[76,64],'Orne':[101,83],
+  'Ille-et-Vilaine':[69,97],'Finistère':[27,94],'Morbihan':[51,106],"Côtes-d'Armor":[49,86],
+  'Loire-Atlantique':[69,117],'Maine-et-Loire':[90,117],'Sarthe':[103,100],
+  'Vendée':[76,137],'Mayenne':[89,94],
+  'Loiret':[137,103],'Eure-et-Loir':[123,89],'Indre-et-Loire':[112,117],
+  'Loir-et-Cher':[123,109],'Cher':[145,129],'Indre':[127,137],
+  "Côte-d'Or":[186,120],'Saône-et-Loire':[181,137],'Yonne':[164,106],'Nièvre':[163,126],
+  'Doubs':[217,123],'Jura':[203,137],'Haute-Saône':[210,111],'Territoire de Belfort':[224,111],
+  'Rhône':[186,160],'Ain':[195,154],'Loire':[175,166],'Isère':[203,174],
+  'Drôme':[192,191],'Ardèche':[177,189],'Savoie':[215,169],'Haute-Savoie':[217,154],
+  'Puy-de-Dôme':[155,163],'Allier':[159,149],'Haute-Loire':[168,183],'Cantal':[148,186],
+  'Haute-Vienne':[123,160],'Corrèze':[132,174],'Creuse':[136,154],
+  'Gironde':[89,189],'Dordogne':[112,183],'Lot-et-Garonne':[108,194],
+  'Landes':[83,209],'Pyrénées-Atlantiques':[85,226],
+  'Haute-Garonne':[125,217],'Tarn-et-Garonne':[121,200],'Tarn':[137,209],
+  'Aveyron':[148,194],'Lot':[130,186],'Gers':[110,214],
+  'Hautes-Pyrénées':[101,231],'Ariège':[127,237],
+  'Hérault':[161,217],'Gard':[177,209],'Aude':[143,229],
+  'Pyrénées-Orientales':[150,246],'Lozère':[163,200],
+  'Bouches-du-Rhône':[197,229],'Var':[213,231],'Alpes-Maritimes':[229,217],
+  'Vaucluse':[192,214],'Alpes-de-Haute-Provence':[213,211],'Hautes-Alpes':[213,194],
+  'Charente-Maritime':[85,166],'Charente':[101,166],'Vienne':[107,143],'Deux-Sèvres':[94,134],
+  'Corse-du-Sud':[261,271],'Haute-Corse':[263,258],
+  'Guadeloupe':[14,272],'Martinique':[28,272],'Guyane':[42,272],'La Réunion':[56,272],'Mayotte':[70,272],
+};
+
+/* ── France city data (communes ≥ 20 000 hab.) ───────────────── */
+const DEPT_CITIES = {
+  'Paris':["Paris"],
+  'Seine-et-Marne':["Meaux","Chelles","Pontault-Combault","Savigny-le-Temple","Dammarie-les-Lys"],
+  'Yvelines':["Versailles","Sartrouville","Poissy","Mantes-la-Jolie","Saint-Germain-en-Laye","Trappes","Conflans-Sainte-Honorine"],
+  'Essonne':["Évry-Courcouronnes","Massy","Corbeil-Essonnes","Savigny-sur-Orge","Palaiseau"],
+  'Hauts-de-Seine':["Boulogne-Billancourt","Colombes","Nanterre","Asnières-sur-Seine","Courbevoie","Rueil-Malmaison","Issy-les-Moulineaux","Levallois-Perret","Clichy"],
+  'Seine-Saint-Denis':["Saint-Denis","Montreuil","Aubervilliers","Aulnay-sous-Bois","Noisy-le-Grand","Saint-Ouen","Drancy","Épinay-sur-Seine"],
+  'Val-de-Marne':["Créteil","Vitry-sur-Seine","Saint-Maur-des-Fossés","Champigny-sur-Marne","Ivry-sur-Seine","Alfortville","Villejuif"],
+  "Val-d'Oise":["Argenteuil","Cergy","Sarcelles","Villiers-le-Bel","Pontoise","Gonesse","Franconville"],
+  'Nord':["Lille","Roubaix","Tourcoing","Dunkerque","Valenciennes","Villeneuve-d'Ascq","Douai","Maubeuge","Wattrelos","Armentières"],
+  'Pas-de-Calais':["Calais","Boulogne-sur-Mer","Arras","Lens","Liévin","Hénin-Beaumont","Bruay-la-Buissière"],
+  'Somme':["Amiens","Abbeville"],
+  'Oise':["Beauvais","Compiègne","Creil"],
+  'Aisne':["Saint-Quentin","Laon","Soissons"],
+  'Marne':["Reims","Châlons-en-Champagne","Épernay"],
+  'Ardennes':["Charleville-Mézières","Sedan"],
+  'Aube':["Troyes","Romilly-sur-Seine"],
+  'Haute-Marne':["Chaumont","Saint-Dizier"],
+  'Moselle':["Metz","Thionville","Forbach","Sarreguemines","Woippy"],
+  'Meurthe-et-Moselle':["Nancy","Vandœuvre-lès-Nancy","Lunéville","Laxou","Maxéville"],
+  'Meuse':["Bar-le-Duc","Verdun"],
+  'Vosges':["Épinal","Saint-Dié-des-Vosges","Remiremont"],
+  'Bas-Rhin':["Strasbourg","Schiltigheim","Haguenau","Illkirch-Graffenstaden"],
+  'Haut-Rhin':["Mulhouse","Colmar","Saint-Louis","Wittenheim"],
+  'Seine-Maritime':["Rouen","Le Havre","Sotteville-lès-Rouen","Saint-Étienne-du-Rouvray","Dieppe"],
+  'Eure':["Évreux","Vernon","Louviers"],
+  'Calvados':["Caen","Hérouville-Saint-Clair","Lisieux"],
+  'Manche':["Cherbourg-en-Cotentin","Saint-Lô","Granville"],
+  'Orne':["Alençon","Flers"],
+  'Ille-et-Vilaine':["Rennes","Saint-Malo","Bruz","Vitré","Fougères"],
+  'Finistère':["Brest","Quimper","Concarneau","Landerneau","Plouzané"],
+  'Morbihan':["Lorient","Vannes","Hennebont","Lanester"],
+  "Côtes-d'Armor":["Saint-Brieuc","Lannion","Dinan"],
+  'Loire-Atlantique':["Nantes","Saint-Nazaire","Rezé","Saint-Herblain","Orvault","Saint-Sébastien-sur-Loire"],
+  'Maine-et-Loire':["Angers","Cholet","Saumur","Trélazé"],
+  'Sarthe':["Le Mans","La Flèche"],
+  'Vendée':["La Roche-sur-Yon","Les Sables-d'Olonne","Challans","Fontenay-le-Comte"],
+  'Mayenne':["Laval","Mayenne"],
+  'Loiret':["Orléans","Fleury-les-Aubrais","Montargis","Olivet"],
+  'Eure-et-Loir':["Chartres","Dreux","Vernouillet"],
+  'Indre-et-Loire':["Tours","Joué-lès-Tours","Saint-Pierre-des-Corps"],
+  'Loir-et-Cher':["Blois","Vendôme"],
+  'Cher':["Bourges","Vierzon"],
+  'Indre':["Châteauroux","Issoudun"],
+  "Côte-d'Or":["Dijon","Beaune","Quetigny"],
+  'Saône-et-Loire':["Chalon-sur-Saône","Mâcon","Le Creusot","Montceau-les-Mines"],
+  'Yonne':["Auxerre","Sens"],
+  'Nièvre':["Nevers"],
+  'Doubs':["Besançon","Montbéliard","Pontarlier"],
+  'Jura':["Lons-le-Saunier","Dole"],
+  'Haute-Saône':["Vesoul","Héricourt"],
+  'Territoire de Belfort':["Belfort"],
+  'Rhône':["Lyon","Villeurbanne","Vénissieux","Caluire-et-Cuire","Saint-Priest","Bron","Vaulx-en-Velin","Décines-Charpieu","Rillieux-la-Pape"],
+  'Ain':["Bourg-en-Bresse","Oyonnax","Ambérieu-en-Bugey"],
+  'Loire':["Saint-Étienne","Roanne","Saint-Chamond","Firminy"],
+  'Isère':["Grenoble","Échirolles","Saint-Martin-d'Hères","Bourgoin-Jallieu","Vienne","Meylan","Fontaine","Voiron"],
+  'Drôme':["Valence","Romans-sur-Isère","Montélimar"],
+  'Ardèche':["Aubenas","Annonay","Privas"],
+  'Savoie':["Chambéry","Aix-les-Bains","Albertville"],
+  'Haute-Savoie':["Annecy","Cluses","Thonon-les-Bains","Annemasse","Bonneville"],
+  'Puy-de-Dôme':["Clermont-Ferrand","Cournon-d'Auvergne","Aubière","Riom"],
+  'Allier':["Moulins","Vichy","Montluçon","Cusset"],
+  'Haute-Loire':["Le Puy-en-Velay"],
+  'Cantal':["Aurillac"],
+  'Haute-Vienne':["Limoges","Saint-Junien"],
+  'Corrèze':["Brive-la-Gaillarde","Tulle"],
+  'Creuse':["Guéret"],
+  'Gironde':["Bordeaux","Mérignac","Pessac","Talence","Villenave-d'Ornon","Bègles","Libourne","Le Bouscat","Lormont"],
+  'Dordogne':["Périgueux","Bergerac"],
+  'Lot-et-Garonne':["Agen","Marmande","Villeneuve-sur-Lot"],
+  'Landes':["Mont-de-Marsan","Dax"],
+  'Pyrénées-Atlantiques':["Pau","Bayonne","Anglet","Biarritz","Oloron-Sainte-Marie"],
+  'Haute-Garonne':["Toulouse","Blagnac","Colomiers","Tournefeuille","Muret","Cugnaux","Balma"],
+  'Tarn-et-Garonne':["Montauban","Castelsarrasin","Moissac"],
+  'Tarn':["Albi","Castres","Mazamet"],
+  'Aveyron':["Rodez","Millau"],
+  'Lot':["Cahors"],
+  'Gers':["Auch"],
+  'Hautes-Pyrénées':["Tarbes","Lourdes"],
+  'Ariège':["Pamiers","Foix"],
+  'Hérault':["Montpellier","Béziers","Sète","Agde","Lattes","Castelnau-le-Lez","Frontignan"],
+  'Gard':["Nîmes","Alès","Vauvert","Bagnols-sur-Cèze"],
+  'Aude':["Carcassonne","Narbonne"],
+  'Pyrénées-Orientales':["Perpignan","Canet-en-Roussillon","Saint-Estève","Rivesaltes"],
+  'Lozère':["Mende"],
+  'Bouches-du-Rhône':["Marseille","Aix-en-Provence","Arles","Martigues","Aubagne","Vitrolles","Istres","Salon-de-Provence","La Ciotat"],
+  'Var':["Toulon","La Seyne-sur-Mer","Hyères","Fréjus","Draguignan","Saint-Raphaël"],
+  'Alpes-Maritimes':["Nice","Antibes","Cannes","Cagnes-sur-Mer","Grasse","Menton","Le Cannet","Mougins"],
+  'Vaucluse':["Avignon","Orange","Carpentras","Cavaillon"],
+  'Alpes-de-Haute-Provence':["Manosque","Digne-les-Bains"],
+  'Hautes-Alpes':["Gap","Briançon"],
+  'Charente-Maritime':["La Rochelle","Rochefort","Saintes","Royan"],
+  'Charente':["Angoulême","Cognac","Soyaux"],
+  'Vienne':["Poitiers","Châtellerault"],
+  'Deux-Sèvres':["Niort","Bressuire"],
+  'Corse-du-Sud':["Ajaccio","Porto-Vecchio"],
+  'Haute-Corse':["Bastia","Corte"],
+  'Guadeloupe':["Pointe-à-Pitre","Les Abymes","Baie-Mahault","Le Gosier","Capesterre-Belle-Eau"],
+  'Martinique':["Fort-de-France","Le Lamentin","Le Robert","Schoelcher"],
+  'Guyane':["Cayenne","Saint-Laurent-du-Maroni","Kourou","Matoury"],
+  'La Réunion':["Saint-Denis","Saint-Paul","Le Tampon","Saint-Pierre","Saint-Louis","Saint-André"],
+  'Mayotte':["Mamoudzou","Koungou","Bandraboua","Dzaoudzi"],
+};
+
 /* ── Game definitions ──────────────────────────────────────── */
 const GAMES = {
   test: {
@@ -1482,6 +1716,45 @@ function showPage(id) {
   });
 }
 
+/* ── France map + cities panel ─────────────────────────────── */
+function buildFranceDots() {
+  const g = document.getElementById('france-dept-dots');
+  if (!g) return;
+  g.innerHTML = '';
+  Object.entries(DEPT_COORDS).forEach(([name, [cx, cy]]) => {
+    const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', '2.5');
+    c.setAttribute('fill', 'rgba(148,163,184,0.55)');
+    c.setAttribute('class', 'dept-dot');
+    c.dataset.dept = name;
+    g.appendChild(c);
+  });
+}
+
+function updateFrancePanel(deptName) {
+  const dots = document.querySelectorAll('.dept-dot');
+  dots.forEach(d => { d.setAttribute('r','2.5'); d.setAttribute('fill','rgba(148,163,184,0.55)'); });
+  const oldPulse = document.getElementById('dept-pulse-ring');
+  if (oldPulse) oldPulse.remove();
+  const coord = DEPT_COORDS[deptName];
+  if (coord) {
+    const [cx, cy] = coord;
+    const active = [...dots].find(d => d.dataset.dept === deptName);
+    if (active) { active.setAttribute('r','5'); active.setAttribute('fill','#f87171'); }
+    const pulse = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    pulse.id = 'dept-pulse-ring';
+    pulse.setAttribute('cx', cx); pulse.setAttribute('cy', cy);
+    pulse.setAttribute('r', '5'); pulse.setAttribute('fill', 'none');
+    pulse.setAttribute('stroke', '#f87171'); pulse.setAttribute('stroke-width', '2');
+    pulse.classList.add('dept-dot-pulse');
+    document.getElementById('france-dept-dots').appendChild(pulse);
+  }
+  const cities = DEPT_CITIES[deptName] || [];
+  document.getElementById('france-cities-list').innerHTML = cities.length
+    ? cities.map(c => `<div class="city-tag">🏙️ ${c}</div>`).join('')
+    : '<div class="city-tag" style="color:var(--muted)">Aucune ville connue</div>';
+}
+
 /* ── Build landing ─────────────────────────────────────────── */
 function buildLanding() {
   const grid = document.getElementById('games-grid');
@@ -1559,6 +1832,13 @@ function startGame(gameId) {
 
   document.getElementById('game-label').textContent = game.name;
   buildCategoryButtons();
+  const isFranceGame = game.db === DB_FRANCE;
+  document.getElementById('france-map-panel').classList.toggle('hidden', !isFranceGame);
+  document.getElementById('france-cities-panel').classList.toggle('hidden', !isFranceGame);
+  if (isFranceGame) {
+    buildFranceDots();
+    document.getElementById('france-cities-list').innerHTML = '';
+  }
   showPage('page-game');
   renderRound();
 }
@@ -1684,6 +1964,7 @@ function renderRound() {
 
   animateCountryReveal(name, () => {
     document.getElementById('round-hint').textContent = 'Pick a category for this country';
+    if (state.game.db === DB_FRANCE) updateFrancePanel(name);
   });
 }
 

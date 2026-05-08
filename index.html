@@ -775,7 +775,7 @@
     </div>
     <div class="hero-badge">World Rankings</div>
     <div class="hero-title">GeoHunter</div>
-    <div class="hero-sub">8 countries. 8 categories. Can you rank the world?</div>
+    <div class="hero-sub">9 countries. 9 categories. Can you rank the world?</div>
   </div>
 
   <div class="section-label">&#8212; Choose a Game</div>
@@ -793,7 +793,7 @@
   </div>
   <div class="progress-wrap">
     <div class="progress-info">
-      <span id="round-label">Round 1 of 8</span>
+      <span id="round-label">Round 1</span>
       <span id="round-hint">Pick a category for this country</span>
     </div>
     <div class="progress-bar-bg">
@@ -1441,8 +1441,8 @@ const GAMES = {
     id:          'test',
     name:        'World Classic',
     icon:        '🌐',
-    description: 'A global mix of 8 categories — football, economy, nature, crime, geography and more.',
-    catIds:      ['football','cars','gdp','immigrants','drugs','biodiversity','murders','elevation'],
+    description: 'A global mix of 9 categories — football, economy, nature, crime, sports, geography and more.',
+    catIds:      ['football','cars','gdp','immigrants','drugs','biodiversity','murders','sports','elevation'],
   },
   france: {
     id:           'france',
@@ -1592,8 +1592,6 @@ function getCategoryIndex(game, catId) {
   return DB.categories.findIndex(c => c.id === catId);
 }
 
-const SCORE_CAP = 100; // ranks above this, and N/A, all score exactly 100
-
 function getRank(name, catDbIndex) {
   const data = state.db[state.entityKey][name];
   if (!data) return null;
@@ -1602,13 +1600,17 @@ function getRank(name, catDbIndex) {
 
 function getScore(countryName, catDbIndex) {
   const rank = getRank(countryName, catDbIndex);
-  if (rank === null || rank > SCORE_CAP) return SCORE_CAP;
+  if (rank === null) {
+    const activeDb = state.db || DB;
+    const cat = activeDb.categories[catDbIndex];
+    return cat.total + 1;
+  }
   return rank;
 }
 
 // Display string for a rank value
 function fmtRank(rank) {
-  if (rank === null || rank > SCORE_CAP) return '+100';
+  if (rank === null) return 'N/A';
   return `#${rank}`;
 }
 
@@ -1645,15 +1647,9 @@ function saveBestScore(gameId, score) {
   return false;
 }
 
-/* Exclude entities with 5+ nulls in this game's specific categories */
+/* Returns list of all valid country/department names for the game */
 function eligibleEntities(db, entityKey, gameCats) {
-  const NULL_LIMIT = 5;
-  return Object.entries(db[entityKey])
-    .filter(([, arr]) => {
-      const nulls = gameCats.filter(cat => arr[cat.dbIndex] === null).length;
-      return nulls < NULL_LIMIT;
-    })
-    .map(([name]) => name);
+  return Object.keys(db[entityKey]);
 }
 
 /* ── Audio ─────────────────────────────────────────────────── */
@@ -1815,7 +1811,7 @@ function startGame(gameId) {
   });
 
   const pool  = shuffle(eligibleEntities(activeDb, entKey, cats));
-  const drawn = pool.slice(0, 8);
+  const drawn = pool.slice(0, cats.length);
 
   state = {
     game,
@@ -1995,10 +1991,9 @@ function assignCategory(catIndex) {
   btn.style.background  = cat.color + '18';
   document.getElementById(`cat-assigned-${catIndex}`).textContent = country;
   const rb = document.getElementById(`cat-rank-${catIndex}`);
-  const isCapped = isNA || rank > SCORE_CAP;
-  rb.textContent = isCapped ? '+100' : `#${rank}`;
-  rb.style.background = isCapped ? 'rgba(239,68,68,.15)' : cat.color + '22';
-  rb.style.color      = isCapped ? 'var(--red)' : cat.color;
+  rb.textContent = isNA ? 'N/A' : `#${rank}`;
+  rb.style.background = isNA ? 'rgba(239,68,68,.15)' : cat.color + '22';
+  rb.style.color      = isNA ? 'var(--red)' : cat.color;
 
   // Disable other buttons during reveal
   state.categories.forEach((_, i) => {
@@ -2013,13 +2008,10 @@ function assignCategory(catIndex) {
   document.getElementById('rr-cat').textContent  = `${cat.icon} ${cat.label}`;
   document.getElementById('rr-main').textContent = country;
 
-  const showCapped = isNA || (rank !== null && rank > SCORE_CAP);
-  if (showCapped) {
-    document.getElementById('rr-num').textContent   = '+100';
+  if (isNA) {
+    document.getElementById('rr-num').textContent   = 'N/A';
     document.getElementById('rr-num').style.color   = 'var(--red)';
-    document.getElementById('rr-sub').textContent   = isNA
-      ? 'No data available — capped at 100 pts'
-      : `Rank #${rank} out of ${catObj.total} — above cap of 100`;
+    document.getElementById('rr-sub').textContent   = 'No data available — scored as max+1';
     document.getElementById('rr-stars').textContent = '💀';
   } else {
     document.getElementById('rr-num').textContent = `#${rank}`;
@@ -2084,10 +2076,9 @@ function showResults() {
   state.assignments.forEach(({ country, catIndex, rank, score }) => {
     const cat    = state.categories[catIndex];
     const catDb  = DB.categories[cat.dbIndex];
-    const capped = rank === null || rank > SCORE_CAP;
-    const qual   = (!capped) ? rankQuality(rank, catDb.total) : null;
-    const cls    = capped ? 'rank-na' : qual.cls;
-    const label  = capped ? '+100' : `#${rank}`;
+    const qual   = (rank !== null) ? rankQuality(rank, catDb.total) : null;
+    const cls    = (rank === null) ? 'rank-na' : qual.cls;
+    const label  = (rank === null) ? 'N/A' : `#${rank}`;
 
     tbody.innerHTML += `
       <tr>
@@ -2108,7 +2099,7 @@ function showResults() {
   showPage('page-results');
 }
 
-/* ── Best solution (brute-force 8! permutations) ───────────── */
+/* ── Best solution (brute-force n! permutations) ───────────── */
 function computeBestSolution() {
   const n      = state.categories.length;
   const cats   = state.categories;

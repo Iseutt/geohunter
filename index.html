@@ -315,7 +315,8 @@
     }
     .country-card.fading { opacity: 0; }
     .country-reveal-row { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 16px; margin-bottom: 6px; }
-    .country-flag { font-size: 64px; transition: filter .12s; line-height: 1; }
+    .country-flag { font-size: 64px; transition: filter .12s; line-height: 1; display: flex; align-items: center; }
+    .flag-img { height: 1em; width: auto; vertical-align: middle; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
     .country-name { font-size: 36px; font-weight: 800; transition: color .12s; }
     .country-prompt { font-size: 15px; color: var(--muted); }
 
@@ -482,7 +483,7 @@
     .td-cat { display: flex; align-items: center; gap: 10px; }
     .td-cat-icon { font-size: 20px; }
     .td-flag-name { display: flex; align-items: center; gap: 8px; }
-    .td-flag { font-size: 22px; }
+    .td-flag { font-size: 22px; display: flex; align-items: center; }
     .rank-badge {
       display: inline-block;
       padding: 3px 12px;
@@ -775,7 +776,7 @@
     </div>
     <div class="hero-badge">World Rankings</div>
     <div class="hero-title">GeoHunter</div>
-    <div class="hero-sub">9 countries. 9 categories. Can you rank the world?</div>
+    <div class="hero-sub">9 countries (🇺🇸, 🇫🇷, 🇯🇵...). 9 categories. Can you rank the world?</div>
   </div>
 
   <div class="section-label">&#8212; Choose a Game</div>
@@ -1441,7 +1442,7 @@ const GAMES = {
     id:          'test',
     name:        'World Classic',
     icon:        '🌐',
-    description: 'A global mix of 9 categories — football, economy, nature, crime, sports, geography and more.',
+    description: 'Rank 9 countries (🇺🇸, 🇨🇳, 🇧🇷...) across 9 global categories — football, economy, sports and more.',
     catIds:      ['football','cars','gdp','immigrants','drugs','biodiversity','murders','sports','elevation'],
   },
   france: {
@@ -1554,9 +1555,7 @@ function getFlag(name) {
   };
   const code = ISO[name];
   if (!code) return '🌍';
-  return code.toUpperCase().split('').map(c =>
-    String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)
-  ).join('');
+  return `<img src="https://flagcdn.com/w160/${code.toLowerCase()}.png" class="flag-img" alt="${name} flag">`;
 }
 
 function getDeptCode(name) {
@@ -1585,7 +1584,8 @@ function getDeptCode(name) {
     'Seine-Saint-Denis':'93','Val-de-Marne':'94',"Val-d'Oise":'95',
     'Guadeloupe':'971','Martinique':'972','Guyane':'973','La Réunion':'974','Mayotte':'976',
   };
-  return codes[name] || '??';
+  const code = codes[name] || '??';
+  return `<img src="https://flagcdn.com/w160/fr.png" class="flag-img" style="margin-right:8px" alt="France"> ${code}`;
 }
 
 function getCategoryIndex(game, catId) {
@@ -1882,7 +1882,7 @@ function animateCountryReveal(finalName, onDone) {
     if (frame < FRAMES) {
       const rand = allNames[Math.floor(Math.random() * allNames.length)];
       nameEl.textContent = rand;
-      flagEl.textContent = state.entityIconFn(rand);
+      flagEl.innerHTML   = state.entityIconFn(rand);
       frame++;
       // Ease-out: starts at ~30 ms, ends at ~200 ms
       const t = frame / FRAMES;
@@ -1892,7 +1892,7 @@ function animateCountryReveal(finalName, onDone) {
     } else {
       // Land on the real country
       nameEl.textContent = finalName;
-      flagEl.textContent = state.entityIconFn(finalName);
+      flagEl.innerHTML   = state.entityIconFn(finalName);
       playReveal();
       nameEl.classList.remove('rolling');
       flagEl.classList.remove('rolling');
